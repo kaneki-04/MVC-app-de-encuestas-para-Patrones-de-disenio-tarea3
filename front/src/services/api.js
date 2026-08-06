@@ -5,7 +5,7 @@ const API_BASE = 'http://localhost:5204/api';
 export const authService = {
   login: async (credentials) => {
     try {
-      console.log('🔗 Enviando login a:', `${API_BASE}/auth/login`);
+      console.log('Enviando login a:', `${API_BASE}/auth/login`);
       
       const response = await fetch(`${API_BASE}/auth/login`, {
         method: 'POST',
@@ -381,6 +381,36 @@ export const preguntasService = {
       }
     } catch (error) {
       console.error('❌ Error en createPregunta:', error);
+      throw error;
+    }
+  },
+
+  // Actualizar pregunta - API REAL
+  updatePregunta: async (preguntaId, preguntaData) => {
+    try {
+      console.log('✏️ Actualizando pregunta ID:', preguntaId, preguntaData);
+      
+      const response = await fetch(`${API_BASE}/preguntas/${preguntaId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(preguntaData),
+        credentials: 'include',
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        return { 
+          success: true, 
+          message: result.message || 'Pregunta actualizada exitosamente' 
+        };
+      } else {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Error al actualizar la pregunta');
+      }
+    } catch (error) {
+      console.error('❌ Error en updatePregunta:', error);
       throw error;
     }
   },

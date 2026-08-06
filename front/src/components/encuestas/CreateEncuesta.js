@@ -1,4 +1,3 @@
-// src/components/encuestas/CreateEncuesta.js
 import React, { useState } from 'react';
 import {
   Box,
@@ -10,9 +9,12 @@ import {
   Alert,
   CircularProgress,
   MenuItem,
-  Grid
+  Grid,
+  Breadcrumbs,
+  Link,
 } from '@mui/material';
-import { useNavigate } from 'react-router-dom';
+import { NavigateNext as NavigateNextIcon } from '@mui/icons-material';
+import { useNavigate, Link as RouterLink } from 'react-router-dom';
 import { encuestasService } from '../../services/api';
 
 const CreateEncuesta = () => {
@@ -73,162 +75,122 @@ const CreateEncuesta = () => {
   };
 
   return (
-    <Container component="main" maxWidth="sm">
-      <Box
-        sx={{
-          marginTop: 10,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          minHeight: '80vh',
-          justifyContent: 'center',
-        }}
+    <Container maxWidth="md">
+      {/* Migas de pan */}
+      <Breadcrumbs
+        separator={<NavigateNextIcon fontSize="small" />}
+        sx={{ mb: 1 }}
       >
-        <Paper
-          elevation={10}
-          sx={{
-            padding: 4,
-            width: '100%',
-            borderRadius: 3,
-          }}
-        >
-          <Typography
-            component="h1"
-            variant="h5"
-            align="center"
-            sx={{ fontWeight: 'bold', mb: 1 }}
-          >
-            Gestor de EncuestApps
-          </Typography>
+        <Link component={RouterLink} to="/encuestas" underline="hover" color="inherit">
+          Encuestas
+        </Link>
+        <Typography color="text.primary" fontWeight={600}>
+          Nueva Encuesta
+        </Typography>
+      </Breadcrumbs>
 
-          <Typography
-            component="h2"
-            variant="h6"
-            align="center"
-            color="text.secondary"
-            sx={{ mb: 3 }}
-          >
-            Crea tu nueva encuesta
-          </Typography>
+      <Typography variant="h4" sx={{ mb: 0.5 }}>
+        Crear nueva encuesta
+      </Typography>
+      <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
+        Completa los datos básicos y después podrás añadir las preguntas.
+      </Typography>
 
-          {error && (
-            <Alert severity="error" sx={{ mb: 2, borderRadius: 2 }}>
-              {error}
-            </Alert>
-          )}
+      {error && (
+        <Alert severity="error" sx={{ mb: 2, borderRadius: 2.5 }}>{error}</Alert>
+      )}
+      {success && (
+        <Alert severity="success" sx={{ mb: 2, borderRadius: 2.5 }}>{success}</Alert>
+      )}
 
-          {success && (
-            <Alert severity="success" sx={{ mb: 2, borderRadius: 2 }}>
-              {success}
-            </Alert>
-          )}
-
-          <Box component="form" onSubmit={handleSubmit}>
-            <Grid container spacing={2}>
-              <Grid item xs={12}>
-                <TextField
-                  required
-                  fullWidth
-                  id="titulo"
-                  label="Título de la Encuesta"
-                  name="titulo"
-                  value={formData.titulo}
-                  onChange={handleChange}
-                  helperText="Ingresa un título descriptivo"
-                />
-              </Grid>
-
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  multiline
-                  rows={4}
-                  id="descripcion"
-                  label="Descripción"
-                  name="descripcion"
-                  value={formData.descripcion}
-                  onChange={handleChange}
-                  helperText="Describe brevemente el propósito de la encuesta"
-                />
-              </Grid>
-
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  required
-                  fullWidth
-                  select
-                  id="estado"
-                  label="Estado"
-                  name="estado"
-                  value={formData.estado}
-                  onChange={handleChange}
-                >
-                  <MenuItem value="Activa">Activa</MenuItem>
-                  <MenuItem value="Inactiva">Inactiva</MenuItem>
-                  <MenuItem value="Finalizada">Finalizada</MenuItem>
-                </TextField>
-              </Grid>
-
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  required
-                  fullWidth
-                  id="cierraEn"
-                  label="Fecha de Cierre"
-                  name="cierraEn"
-                  type="date"
-                  InputLabelProps={{ shrink: true }}
-                  value={formData.cierraEn}
-                  onChange={handleChange}
-                  helperText="Fecha en que finalizará la encuesta"
-                />
-              </Grid>
-
-              {/* Botones ordenados y alineados */}
-              <Grid item xs={12}>
-                <Box display="flex" justifyContent="flex-end" gap={2} sx={{ mt: 3 }}>
-                  <Button
-                    variant="outlined"
-                    color="inherit"
-                    onClick={() => navigate('/encuestas')}
-                    disabled={loading}
-                    sx={{
-                      textTransform: 'none',
-                      borderRadius: 2,
-                      px: 3,
-                      py: 1,
-                    }}
-                  >
-                    Cancelar
-                  </Button>
-
-                  <Button
-                    type="submit"
-                    variant="contained"
-                    color="primary"
-                    disabled={loading}
-                    sx={{
-                      textTransform: 'none',
-                      borderRadius: 2,
-                      px: 3,
-                      py: 1,
-                      fontWeight: 'bold',
-                      backgroundColor: '#23b42fff',
-                      '&:hover': { backgroundColor: '#12a258ff' },
-                    }}
-                  >
-                    {loading ? (
-                      <CircularProgress size={24} color="inherit" />
-                    ) : (
-                      'Siguiente'
-                    )}
-                  </Button>
-                </Box>
-              </Grid>
+      <Paper sx={{ p: { xs: 3, sm: 4 }, border: '1px solid #E3E9F2' }}>
+        <Box component="form" onSubmit={handleSubmit}>
+          <Grid container spacing={2.5}>
+            <Grid item xs={12}>
+              <TextField
+                required
+                fullWidth
+                id="titulo"
+                label="Título de la Encuesta"
+                name="titulo"
+                value={formData.titulo}
+                onChange={handleChange}
+                helperText="Ingresa un título descriptivo"
+              />
             </Grid>
-          </Box>
-        </Paper>
-      </Box>
+
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                multiline
+                rows={4}
+                id="descripcion"
+                label="Descripción"
+                name="descripcion"
+                value={formData.descripcion}
+                onChange={handleChange}
+                helperText="Describe brevemente el propósito de la encuesta"
+              />
+            </Grid>
+
+            <Grid item xs={12} sm={6}>
+              <TextField
+                required
+                fullWidth
+                select
+                id="estado"
+                label="Estado"
+                name="estado"
+                value={formData.estado}
+                onChange={handleChange}
+              >
+                <MenuItem value="Activa">Activa</MenuItem>
+                <MenuItem value="Inactiva">Inactiva</MenuItem>
+                <MenuItem value="Finalizada">Finalizada</MenuItem>
+              </TextField>
+            </Grid>
+
+            <Grid item xs={12} sm={6}>
+              <TextField
+                required
+                fullWidth
+                id="cierraEn"
+                label="Fecha de Cierre"
+                name="cierraEn"
+                type="date"
+                InputLabelProps={{ shrink: true }}
+                value={formData.cierraEn}
+                onChange={handleChange}
+                helperText="Fecha en que finalizará la encuesta"
+              />
+            </Grid>
+
+            <Grid item xs={12}>
+              <Box display="flex" justifyContent="flex-end" gap={2} sx={{ mt: 2 }}>
+                <Button
+                  variant="outlined"
+                  color="inherit"
+                  onClick={() => navigate('/encuestas')}
+                  disabled={loading}
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  type="submit"
+                  variant="contained"
+                  disabled={loading}
+                >
+                  {loading ? (
+                    <CircularProgress size={24} color="inherit" />
+                  ) : (
+                    'Siguiente'
+                  )}
+                </Button>
+              </Box>
+            </Grid>
+          </Grid>
+        </Box>
+      </Paper>
     </Container>
   );
 };

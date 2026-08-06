@@ -13,6 +13,7 @@ import {
   MenuItem,
   CircularProgress,
 } from '@mui/material';
+import { FileDownload as FileDownloadIcon } from '@mui/icons-material';
 import { encuestasService } from '../../services/api';
 
 const ExportEncuestaModal = ({ open, onClose }) => {
@@ -66,7 +67,12 @@ const ExportEncuestaModal = ({ open, onClose }) => {
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-      <DialogTitle> Exportar Encuesta a Excel</DialogTitle>
+      <DialogTitle sx={{ fontWeight: 700 }}>
+        <Box display="flex" alignItems="center" gap={1}>
+          <FileDownloadIcon color="primary" />
+          Exportar Encuesta a Excel
+        </Box>
+      </DialogTitle>
       <DialogContent dividers>
         {loading ? (
           <Box display="flex" justifyContent="center" p={3}>
@@ -86,7 +92,7 @@ const ExportEncuestaModal = ({ open, onClose }) => {
             </FormControl>
 
             {selectedEncuesta && (
-              <Box sx={{ p: 2, border: '1px solid #ddd', borderRadius: 2 }}>
+              <Box sx={{ p: 2.5, border: '1px solid #E3E9F2', borderRadius: 2.5, bgcolor: '#F8FAFD' }}>
                 <Typography variant="subtitle1"><strong>ID:</strong> {selectedEncuesta.id}</Typography>
                 <Typography variant="subtitle1"><strong>Título:</strong> {selectedEncuesta.titulo}</Typography>
                 <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
@@ -103,13 +109,13 @@ const ExportEncuestaModal = ({ open, onClose }) => {
           </>
         )}
       </DialogContent>
-      <DialogActions>
+      <DialogActions sx={{ p: 2.5 }}>
         <Button onClick={onClose} color="inherit">Cancelar</Button>
         <Button
           variant="contained"
-          color="success"
           onClick={handleDownloadExcel}
           disabled={!selectedEncuesta || downloading}
+          startIcon={<FileDownloadIcon />}
         >
           {downloading ? 'Descargando...' : 'Descargar Excel'}
         </Button>

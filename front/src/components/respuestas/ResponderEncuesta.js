@@ -15,8 +15,17 @@ import {
   CircularProgress,
   Container,
   Slider,
-  Chip
+  Chip,
+  Breadcrumbs,
+  Link,
+  Divider,
+  IconButton,
 } from '@mui/material';
+import {
+  ArrowBack as ArrowBackIcon,
+  NavigateNext as NavigateNextIcon,
+} from '@mui/icons-material';
+import { Link as RouterLink } from 'react-router-dom';
 import { respuestasService, encuestasService, preguntasService } from '../../services/api';
 
 const ResponderEncuesta = () => {
@@ -32,23 +41,19 @@ const ResponderEncuesta = () => {
 
   useEffect(() => {
     loadEncuesta();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
   const loadEncuesta = async () => {
     try {
       setLoading(true);
       setError('');
-      
-      // Cargar encuesta
+
       const encuestaData = await encuestasService.getEncuesta(id);
       setEncuesta(encuestaData);
 
-      // 🔹 Cargar preguntas REALES desde el backend - CON MANEJO DE ERRORES
-      console.log('🔄 Cargando preguntas reales de la encuesta...');
       const preguntasData = await preguntasService.getPreguntasByEncuesta(id);
-      
-      console.log('✅ Preguntas cargadas:', preguntasData);
-      
+
       if (!preguntasData || preguntasData.length === 0) {
         setError('Esta encuesta no tiene preguntas configuradas.');
         setPreguntas([]);
@@ -57,7 +62,6 @@ const ResponderEncuesta = () => {
 
       setPreguntas(preguntasData);
 
-      // Inicializar respuestas vacías
       const respuestasIniciales = {};
       preguntasData.forEach(pregunta => {
         if (pregunta.tipoPregunta === 'OpcionMultiple') {
@@ -67,9 +71,8 @@ const ResponderEncuesta = () => {
         }
       });
       setRespuestas(respuestasIniciales);
-      
     } catch (error) {
-      console.error('❌ Error al cargar la encuesta:', error);
+      console.error('Error al cargar la encuesta:', error);
       setError(`Error al cargar la encuesta: ${error.message}`);
       setPreguntas([]);
     } finally {
@@ -105,7 +108,6 @@ const ResponderEncuesta = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Validar preguntas obligatorias
     const preguntasObligatorias = preguntas.filter(p => p.obligatorio);
     const errores = preguntasObligatorias.filter(p => {
       const respuesta = respuestas[p.id];
@@ -136,7 +138,7 @@ const ResponderEncuesta = () => {
         navigate('/encuestas');
       }, 2000);
     } catch (error) {
-      console.error('❌ Error al enviar respuestas:', error);
+      console.error('Error al enviar respuestas:', error);
       setError(`Error al enviar las respuestas: ${error.message}`);
     } finally {
       setSubmitting(false);
@@ -169,8 +171,9 @@ const ResponderEncuesta = () => {
                 <FormControlLabel
                   key={opcion.id}
                   value={opcion.value}
-                  control={<Radio />}
+                  control={<Radio color="primary" />}
                   label={opcion.label}
+                  sx={{ mb: 0.5 }}
                 />
               ))}
             </RadioGroup>
@@ -185,6 +188,7 @@ const ResponderEncuesta = () => {
                 key={opcion.id}
                 control={
                   <Checkbox
+                    color="primary"
                     checked={(respuestas[pregunta.id] || []).includes(opcion.value)}
                     onChange={(e) => handleOpcionMultipleChange(
                       pregunta.id,
@@ -194,6 +198,7 @@ const ResponderEncuesta = () => {
                   />
                 }
                 label={opcion.label}
+                sx={{ mb: 0.5 }}
               />
             ))}
           </Box>
@@ -201,8 +206,9 @@ const ResponderEncuesta = () => {
 
       case 'Escala':
         return (
-          <Box sx={{ px: 2 }}>
+          <Box sx={{ px: 2, pt: 2 }}>
             <Slider
+              color="primary"
               value={respuestas[pregunta.id] ? parseInt(respuestas[pregunta.id]) : 3}
               onChange={(_, value) => handleRespuestaChange(pregunta.id, value.toString())}
               min={1}
@@ -241,12 +247,11 @@ const ResponderEncuesta = () => {
   if (!encuesta) {
     return (
       <Container>
-        <Alert severity="error">
+        <Alert severity="error" sx={{ mb: 2, borderRadius: 2.5 }}>
           Encuesta no encontrada o no está disponible
         </Alert>
-        <Button 
-          variant="contained" 
-          sx={{ mt: 2 }}
+        <Button
+          variant="contained"
           onClick={() => navigate('/encuestas')}
         >
           Volver a Encuestas
@@ -258,11 +263,11 @@ const ResponderEncuesta = () => {
   if (preguntas.length === 0 && error) {
     return (
       <Container>
-        <Alert severity="warning" sx={{ mb: 2 }}>
+        <Alert severity="warning" sx={{ mb: 2, borderRadius: 2.5 }}>
           {error}
         </Alert>
-        <Button 
-          variant="contained" 
+        <Button
+          variant="contained"
           onClick={() => navigate('/encuestas')}
         >
           Volver a Encuestas
@@ -272,95 +277,114 @@ const ResponderEncuesta = () => {
   }
 
   return (
-    <Container maxWidth="md" sx={{ py: 4 }}>
-      <Paper elevation={3} sx={{ p: 4 }}>
-        <Typography variant="h4" component="h1" gutterBottom>
-          {encuesta.titulo}
+    <Container maxWidth="md" sx={{ px: { xs: 0, sm: 2 } }}>
+      <Breadcrumbs
+        separator={<NavigateNextIcon fontSize="small" />}
+        sx={{ mb: 2 }}
+      >
+        <Link component={RouterLink} to="/encuestas" underline="hover" color="inherit">
+          Encuestas
+        </Link>
+        <Typography color="text.primary" fontWeight={600}>
+          Responder
         </Typography>
+      </Breadcrumbs>
 
-        {encuesta.descripcion && (
-          <Typography variant="body1" color="textSecondary" paragraph>
-            {encuesta.descripcion}
-          </Typography>
-        )}
-
-        <Box sx={{ mb: 2 }}>
-          <Chip 
-            label={encuesta.estado || 'Activa'} 
-            color={encuesta.estado === 'Activa' ? 'success' : 'default'}
-            size="small"
-          />
-          {encuesta.cierraEn && (
-            <Chip 
-              label={`Cierra: ${new Date(encuesta.cierraEn).toLocaleDateString()}`}
-              variant="outlined"
-              size="small"
-              sx={{ ml: 1 }}
-            />
+      <Box display="flex" alignItems="center" gap={1.5} mb={3}>
+        <IconButton onClick={() => navigate('/encuestas')} title="Volver">
+          <ArrowBackIcon />
+        </IconButton>
+        <Box>
+          <Typography variant="h4">{encuesta.titulo}</Typography>
+          {encuesta.descripcion && (
+            <Typography variant="body1" color="text.secondary">
+              {encuesta.descripcion}
+            </Typography>
           )}
         </Box>
+      </Box>
 
-        {error && (
-          <Alert severity="error" sx={{ mb: 3 }}>
-            {error}
-          </Alert>
+      <Box sx={{ mb: 3 }}>
+        <Chip
+          label={encuesta.estado || 'Activa'}
+          color={encuesta.estado === 'Activa' ? 'success' : 'default'}
+          size="small"
+        />
+        {encuesta.cierraEn && (
+          <Chip
+            label={`Cierra: ${new Date(encuesta.cierraEn).toLocaleDateString()}`}
+            variant="outlined"
+            size="small"
+            sx={{ ml: 1 }}
+          />
         )}
+      </Box>
 
-        {success && (
-          <Alert severity="success" sx={{ mb: 3 }}>
-            {success}
-          </Alert>
-        )}
+      {error && (
+        <Alert severity="error" sx={{ mb: 3, borderRadius: 2.5 }}>{error}</Alert>
+      )}
+      {success && (
+        <Alert severity="success" sx={{ mb: 3, borderRadius: 2.5 }}>{success}</Alert>
+      )}
 
-        <form onSubmit={handleSubmit}>
-          <Box sx={{ mt: 4 }}>
-            {preguntas.map((pregunta, index) => (
-              <Paper key={pregunta.id} sx={{ p: 3, mb: 3 }} variant="outlined">
-                <Typography variant="h6" gutterBottom>
-                  {index + 1}. {pregunta.enunciado}
-                  {pregunta.obligatorio && (
-                    <Chip
-                      label="Obligatorio"
-                      color="error"
-                      size="small"
-                      sx={{ ml: 1 }}
-                    />
-                  )}
-                </Typography>
-
-                <Typography
-                  variant="caption"
-                  color="textSecondary"
-                  display="block"
-                  sx={{ mb: 2 }}
-                >
-                  Tipo: {pregunta.tipoPregunta}
-                </Typography>
-
-                {renderPregunta(pregunta)}
-              </Paper>
-            ))}
-          </Box>
-
-          <Box display="flex" gap={2} justifyContent="flex-end" sx={{ mt: 4 }}>
-            <Button
-              variant="outlined"
-              onClick={() => navigate('/encuestas')}
-              disabled={submitting}
+      <form onSubmit={handleSubmit}>
+        <Box>
+          {preguntas.map((pregunta, index) => (
+            <Paper
+              key={pregunta.id}
+              sx={{
+                p: { xs: 2.5, sm: 3.5 },
+                mb: 3,
+                border: '1px solid #E3E9F2',
+                borderRadius: 3,
+              }}
             >
-              Cancelar
-            </Button>
-            <Button
-              type="submit"
-              variant="contained"
-              disabled={submitting || preguntas.length === 0}
-              size="large"
-            >
-              {submitting ? <CircularProgress size={24} /> : 'Enviar Respuestas'}
-            </Button>
-          </Box>
-        </form>
-      </Paper>
+              <Typography variant="h6" sx={{ fontWeight: 700 }}>
+                {index + 1}. {pregunta.enunciado}
+                {pregunta.obligatorio && (
+                  <Chip
+                    label="Obligatorio"
+                    color="error"
+                    size="small"
+                    sx={{ ml: 1 }}
+                  />
+                )}
+              </Typography>
+
+              <Divider sx={{ my: 1.5 }} />
+
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                display="block"
+                sx={{ mb: 2 }}
+              >
+                {pregunta.tipoPregunta}
+              </Typography>
+
+              {renderPregunta(pregunta)}
+            </Paper>
+          ))}
+        </Box>
+
+        <Box display="flex" gap={2} justifyContent="flex-end" sx={{ mt: 4, mb: 2 }}>
+          <Button
+            variant="outlined"
+            onClick={() => navigate('/encuestas')}
+            disabled={submitting}
+          >
+            Cancelar
+          </Button>
+          <Button
+            type="submit"
+            variant="contained"
+            disabled={submitting || preguntas.length === 0}
+            size="large"
+          >
+            {submitting ? <CircularProgress size={24} color="inherit" /> : 'Enviar Respuestas'}
+          </Button>
+        </Box>
+      </form>
     </Container>
   );
 };

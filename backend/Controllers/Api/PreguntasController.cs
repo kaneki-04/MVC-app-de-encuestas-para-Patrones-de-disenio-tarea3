@@ -140,8 +140,20 @@ namespace GestorEncuestas_MVC.Controllers.Api
                 EncuestaId = preguntaDto.EncuestaId
             };
 
-            // Si es una pregunta con opciones, crear las opciones básicas según el tipo
-            if (preguntaDto.TipoPregunta == "SeleccionUnica" || preguntaDto.TipoPregunta == "OpcionMultiple")
+            // Si es una pregunta con opciones, crear las opciones según lo enviado o por defecto
+            if ((preguntaDto.TipoPregunta == "SeleccionUnica" || preguntaDto.TipoPregunta == "OpcionMultiple") && preguntaDto.Opciones != null && preguntaDto.Opciones.Count > 0)
+            {
+                int pos = 1;
+                pregunta.Opciones = preguntaDto.Opciones
+                    .Where(op => !string.IsNullOrWhiteSpace(op))
+                    .Select(op => new PreguntaOpcion
+                    {
+                        Position = pos++,
+                        Label = op.Trim(),
+                        Value = op.Trim().ToLower().Replace(" ", "_")
+                    }).ToList();
+            }
+            else if (preguntaDto.TipoPregunta == "SeleccionUnica" || preguntaDto.TipoPregunta == "OpcionMultiple")
             {
                 pregunta.Opciones = CrearOpcionesPorDefecto(preguntaDto.TipoPregunta);
             }
@@ -157,6 +169,57 @@ namespace GestorEncuestas_MVC.Controllers.Api
                 Success = true, 
                 Message = "Pregunta creada exitosamente",
                 Id = pregunta.Id 
+            });
+        }
+
+        // PUT: api/preguntas/5
+        [HttpPut("{id}")]
+        public async Task<IActionResult> UpdatePregunta(int id, [FromBody] CreatePreguntaDto preguntaDto)
+        {
+            var usuarioActual = await _userManager.GetUserAsync(User);
+            if (usuarioActual == null)
+            {
+                return Unauthorized();
+            }
+
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            var pregunta = await _context.Preguntas
+                .Include(p => p.Encuesta)
+                .Include(p => p.Opciones)
+                .FirstOrDefaultAsync(p => p.Id == id && p.Encuesta.AutorId == usuarioActual.Id);
+
+            if (pregunta == null)
+            {
+                return NotFound("Pregunta no encontrada o no tienes permisos");
+            }
+
+            pregunta.Enunciado = preguntaDto.Enunciado;
+            pregunta.TipoPregunta = preguntaDto.TipoPregunta;
+            pregunta.Obligatorio = preguntaDto.Obligatorio;
+
+            if ((preguntaDto.TipoPregunta == "SeleccionUnica" || preguntaDto.TipoPregunta == "OpcionMultiple") && preguntaDto.Opciones != null && preguntaDto.Opciones.Count > 0)
+            {
+                _context.PreguntasOpciones.RemoveRange(pregunta.Opciones);
+                int pos = 1;
+                pregunta.Opciones = preguntaDto.Opciones
+                    .Where(op => !string.IsNullOrWhiteSpace(op))
+                    .Select(op => new PreguntaOpcion
+                    {
+                        Position = pos++,
+                        Label = op.Trim(),
+                        Value = op.Trim().ToLower().Replace(" ", "_")
+                    }).ToList();
+            }
+
+            await _context.SaveChangesAsync();
+
+            return Ok(new { 
+                Success = true, 
+                Message = "Pregunta actualizada exitosamente" 
             });
         }
 
@@ -188,6 +251,8 @@ namespace GestorEncuestas_MVC.Controllers.Api
             });
         }
 
+        // PATRÓN DE DISEÑO: Factory Method (Método Fábrica)
+        // Encapsula la creación de colecciones de opciones según el tipo de pregunta.
         private List<PreguntaOpcion> CrearOpcionesPorDefecto(string tipoPregunta)
         {
             var opciones = new List<PreguntaOpcion>();
@@ -258,5 +323,7 @@ namespace GestorEncuestas_MVC.Controllers.Api
         
         [Required]
         public int EncuestaId { get; set; }
+
+        public List<string>? Opciones { get; set; }
     }
 }

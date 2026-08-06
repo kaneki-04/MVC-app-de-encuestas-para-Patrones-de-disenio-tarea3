@@ -2,44 +2,51 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using GestorEncuestas_MVC.Data;
 using GestorEncuestas_MVC.Models;
-using GestorEncuestas_MVC.Services; 
-using Microsoft.AspNetCore.Mvc.NewtonsoftJson; 
-using Newtonsoft.Json; 
+using GestorEncuestas_MVC.Services;
+using Microsoft.AspNetCore.Mvc.NewtonsoftJson;
+using Newtonsoft.Json;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+// Servicios MVC
 builder.Services.AddControllersWithViews();
 
 builder.Services.AddScoped<IExcelExportService, ExcelExportService>();
+
 builder.Services.AddControllers()
     .AddNewtonsoftJson(options =>
     {
         options.SerializerSettings.ReferenceLoopHandling = ReferenceLoopHandling.Ignore;
     });
 
+
+// CORS React
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("ReactApp", policy =>
     {
-        policy.WithOrigins("http://localhost:3000") // URL del frontend React
+        policy.WithOrigins("http://localhost:3000")
               .AllowAnyMethod()
               .AllowAnyHeader()
               .AllowCredentials();
     });
 });
 
-// Configurar Entity Framework con MySQL
+
+// Entity Framework MySQL
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseMySql(
         builder.Configuration.GetConnectionString("DefaultConnection"),
-        ServerVersion.AutoDetect(builder.Configuration.GetConnectionString("DefaultConnection"))
+        ServerVersion.AutoDetect(
+            builder.Configuration.GetConnectionString("DefaultConnection")
+        )
     ));
 
-// Configurar Identity
+
+// Identity
 builder.Services.AddIdentity<Usuario, Rol>(options =>
 {
-    // Configuración de contraseña
+    // Password
     options.Password.RequireDigit = true;
     options.Password.RequireLowercase = true;
     options.Password.RequireNonAlphanumeric = false;
@@ -47,45 +54,52 @@ builder.Services.AddIdentity<Usuario, Rol>(options =>
     options.Password.RequiredLength = 6;
     options.Password.RequiredUniqueChars = 1;
 
-    // Configuración de usuario
+    // Usuario
     options.User.RequireUniqueEmail = false;
 
-    // Configuración de bloqueo
+    // Bloqueo
     options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5);
     options.Lockout.MaxFailedAccessAttempts = 5;
     options.Lockout.AllowedForNewUsers = true;
 
-    // Configuración de inicio de sesión
+    // Login
     options.SignIn.RequireConfirmedAccount = false;
     options.SignIn.RequireConfirmedEmail = false;
     options.SignIn.RequireConfirmedPhoneNumber = false;
+
 })
 .AddEntityFrameworkStores<ApplicationDbContext>()
 .AddDefaultTokenProviders();
 
-// Configurar autenticación con cookies
+
+// Cookies
 builder.Services.ConfigureApplicationCookie(options =>
 {
     options.Cookie.HttpOnly = true;
     options.ExpireTimeSpan = TimeSpan.FromMinutes(60);
+
     options.LoginPath = "/Cuenta/Login";
     options.AccessDeniedPath = "/Cuenta/AccessDenied";
     options.LogoutPath = "/Cuenta/Logout";
+
     options.SlidingExpiration = true;
 });
 
-// Configurar políticas de autorización
+
+// Autorización
 builder.Services.AddAuthorization(options =>
 {
-    options.AddPolicy("RequireAdmin", policy =>
-        policy.RequireRole("Admin"));
+    options.AddPolicy("RequireAdmin",
+        policy => policy.RequireRole("Admin"));
 
-    options.AddPolicy("RequireUser", policy =>
-        policy.RequireRole("User", "Admin"));
+    options.AddPolicy("RequireUser",
+        policy => policy.RequireRole("User", "Admin"));
 });
 
-// Agregar soporte para sesiones
+
+// Sesiones
 builder.Services.AddDistributedMemoryCache();
+
 builder.Services.AddSession(options =>
 {
     options.IdleTimeout = TimeSpan.FromMinutes(30);
@@ -94,9 +108,11 @@ builder.Services.AddSession(options =>
     options.Cookie.SameSite = SameSiteMode.Strict;
 });
 
+
 var app = builder.Build();
 
-// Configurar el pipeline de solicitudes HTTP
+
+// Pipeline
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
@@ -104,74 +120,136 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
 app.UseStaticFiles();
 
 app.UseRouting();
 
 app.UseCors("ReactApp");
 
-// IMPORTANTE: UseAuthentication debe ir antes de UseAuthorization
+
+// IMPORTANTE
 app.UseAuthentication();
-app.UseAuthorization();
 
 app.UseSession();
 
+app.UseAuthorization();
+
+
 app.MapControllers();
 
-// Crear roles iniciales y usuario admin (solo en desarrollo)
+
+// Inicialización de roles y usuarios
 if (app.Environment.IsDevelopment())
 {
-    using (var scope = app.Services.CreateScope())
-    {
-        var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<Rol>>();
-        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<Usuario>>();
+    using var scope = app.Services.CreateScope();
 
-        // Crear roles si no existen
-        var roles = new[]
+    var roleManager =
+        scope.ServiceProvider.GetRequiredService<RoleManager<Rol>>();
+
+    var userManager =
+        scope.ServiceProvider.GetRequiredService<UserManager<Usuario>>();
+
+
+    // Crear roles
+    string[] roles =
+    {
+        "Admin",
+        "User"
+    };
+
+
+    foreach (var roleName in roles)
+    {
+        if (!await roleManager.RoleExistsAsync(roleName))
         {
-            new { Name = "Admin", Id = 1 },
-            new { Name = "User", Id = 2 }
+            await roleManager.CreateAsync(
+                new Rol
+                {
+                    Name = roleName,
+                    NormalizedName = roleName.ToUpper()
+                }
+            );
+        }
+    }
+
+
+
+    // Crear administrador
+    var admin = await userManager.FindByNameAsync("admin");
+
+    if (admin == null)
+    {
+        var adminRole = await roleManager.FindByNameAsync("Admin");
+
+        var userAdmin = new Usuario
+        {
+            UserName = "admin",
+            Email = "admin@email.com",
+            EmailConfirmed = true,
+            RolId = adminRole!.Id
         };
 
-        foreach (var role in roles)
+
+        var result =
+            await userManager.CreateAsync(
+                userAdmin,
+                "Admin123!"
+            );
+
+
+        if (result.Succeeded)
         {
-            if (!await roleManager.RoleExistsAsync(role.Name))
-            {
-                await roleManager.CreateAsync(new Rol
-                {
-                    Id = role.Id,
-                    DisplayRolNombre = role.Name,
-                    Name = role.Name,
-                    NormalizedName = role.Name.ToUpper()
-                });
-            }
+            await userManager.AddToRoleAsync(
+                userAdmin,
+                "Admin"
+            );
         }
+    }
 
-        // Crear usuario admin si no existe
-        var adminUser = await userManager.FindByNameAsync("admin");
-        if (adminUser == null)
+
+
+    // Crear usuario Kevin
+    var kevin =
+        await userManager.FindByNameAsync("Kevin");
+
+
+    if (kevin == null)
+    {
+        var userRole = await roleManager.FindByNameAsync("User");
+
+        var userKevin = new Usuario
         {
-            var user = new Usuario
-            {
-                UserName = "admin",
-                NormalizedUserName = "ADMIN",
-                Email = "admin@email.com",
-                NormalizedEmail = "ADMIN@EMAIL.COM",
-                EmailConfirmed = true,
-                RolId = 1 // Asignar el ID del rol Admin
-            };
+            UserName = "Kevin",
+            Email = "kevin@prueba.com",
+            EmailConfirmed = true,
+            RolId = userRole!.Id
+        };
 
-            var result = await userManager.CreateAsync(user, "Admin123!");
-            if (result.Succeeded)
-            {
-                await userManager.AddToRoleAsync(user, "Admin");
-            }
+
+        var result =
+            await userManager.CreateAsync(
+                userKevin,
+                "123Qwe"
+            );
+
+
+        if (result.Succeeded)
+        {
+            await userManager.AddToRoleAsync(
+                userKevin,
+                "User"
+            );
         }
     }
 }
 
+
+
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=Cuenta}/{action=Login}/{id?}");
+    pattern: "{controller=Cuenta}/{action=Login}/{id?}"
+);
+
 
 app.Run();
