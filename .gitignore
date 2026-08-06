@@ -1,1 +1,36 @@
-bin/\nobj/\n*.dll\n*.pdb\n*.exe\n*.cache
+# ===============================
+# Node / React (Frontend)
+# ===============================
+/Frontend/node_modules
+/Frontend/build
+/Frontend/.env
+/Frontend/npm-debug.log*
+/Frontend/yarn-debug.log*
+/Frontend/yarn-error.log*
+
+# ===============================
+# Visual Studio / .NET (Backend)
+# ===============================
+# Build results
+/Backend/bin/
+/Backend/obj/
+/Backend/**/*.user
+/Backend/**/*.suo
+/Backend/**/*.userosscache
+/Backend/**/*.sln.docstates
+
+# Rider
+/.idea/
+
+# VS Code
+.vscode/
+
+# Configuración local
+/Backend/appsettings.Development.json
+
+# Otros
+*.log
+*.vs
+*.DS_Store
+*.vscode/
+
