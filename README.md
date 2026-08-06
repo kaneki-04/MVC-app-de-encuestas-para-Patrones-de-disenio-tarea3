@@ -7,8 +7,8 @@
 
 **Elaborado por:** Kevin Alejandro Sánchez Machado  
 **Carné:** 22-01062-0  
-**Docente / Tutor:** Juan Carlos Leyton  
-**Fecha:** 10.11.2025  
+**Docente / Tutor:**  WILLIAM NOEL MARTINEZ OROZCO
+**Fecha:** 05/08/2026  
 
 ---
 
