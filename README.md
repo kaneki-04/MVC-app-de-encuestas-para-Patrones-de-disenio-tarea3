@@ -1,63 +1,97 @@
-# Sistema de Gestión de Encuestas (MVC & React)
+# Sistema de Gestión de Encuestas (EncuestasApp)
 
-Aplicación web desarrollada como parte de la tarea de **Patrones de Diseño**, diseñada para la creación, gestión, respuesta y análisis estadístico de encuestas de forma profesional e intuitiva.
+**Universidad Nacional Autónoma de Nicaragua, León (UNAN-León)**  
+**Área de Conocimiento de Ciencias y Tecnología**  
+**Carrera:** Ing. en Sistemas de Información  
+**Componente:** Programación Orientada a la Web II / Patrones de Diseño  
+
+**Elaborado por:** Kevin Alejandro Sánchez Machado  
+**Carné:** 22-01062-0  
+**Docente / Tutor:** Juan Carlos Leyton  
+**Fecha:** 10.11.2025  
 
 ---
 
-## 🛠️ Tecnologías Utilizadas
+## 1. Introducción
 
-- **Backend**: 
-  - C# (.NET 9 / ASP.NET Core MVC & Web API)
-  - Entity Framework Core (ORM con SQL Server / Base de datos relacional)
-  - ASP.NET Core Identity (Autenticación y gestión de usuarios y roles)
+El presente documento describe el funcionamiento, alcance y desarrollo del proyecto **Gestor de Encuestas (EncuestasApp)**. El objetivo central del sistema es permitir a los usuarios crear, administrar y responder encuestas mediante una plataforma web moderna, integrada y segura.
+
+La aplicación se compone de un backend en **.NET 9 / ASP.NET MVC & Web API** y un frontend en **React**, comunicados mediante una API REST. El sistema incluye autenticación mediante Identity, manejo de roles (Admin y User), administración de encuestas, preguntas personalizadas con múltiples tipos, respuestas de usuarios, gráficos analíticos y exportación de datos.
+
+---
+
+## 2. Desarrollo
+
+### 2.1 Arquitectura General
+El sistema está dividido en dos capas principales:
+- **Backend (.NET Core / MVC / Web API)**: Encargado de la lógica del servidor, seguridad, sesiones, autenticación con ASP.NET Identity, roles y gestión de la base de datos relacional mediante Entity Framework Core.
+- **Frontend (React)**: Interfaz de usuario construida con componentes reutilizables (Material-UI), navegación SPA (React Router) y consumo de API mediante Fetch/Axios.
+
+### 2.2 Funcionalidades Implementadas
+1. **Autenticación y Sesiones**: Inicio y cierre de sesión seguro mediante ASP.NET Identity y persistencia de usuario.
+2. **Gestión de Roles**: Diferenciación entre Administrador y Usuario, con control de acceso a módulos según el perfil.
+3. **Gestión de Encuestas (CRUD)**: Creación, edición, actualización, listado general y eliminación de encuestas.
+4. **Administración de Preguntas y Opciones**: 
+   - Tipos de preguntas: Texto Libre, Selección Única, Opción Múltiple y Escala Numérica.
+   - Creación y personalización dinámica de opciones de respuesta.
+5. **Base de Datos Relacional**: Tablas estructuradas para usuarios, roles, encuestas, preguntas, opciones, respuestas y tablas de Identity.
+6. **Estadísticas y Exportación**: Visualización de gráficos analíticos (Recharts) por pregunta y exportación de datos.
+
+### 2.3 Tecnologías Utilizadas
+- **Backend**:
+  - ASP.NET Core MVC & Web API (.NET 9)
+  - ASP.NET Core Identity
+  - C#
+  - Entity Framework Core
+  - MySQL / SQL Server
 - **Frontend**:
-  - React.js
-  - Material-UI (MUI) para componentes visuales modernos
-  - Recharts para visualización de estadísticas y gráficos analíticos
-  - React Router DOM para navegación SPA
+  - React 18+
+  - React Router DOM
+  - Material-UI (MUI)
+  - Recharts (Gráficos analíticos)
+- **Patrones de Diseño**:
+  - **MVC (Modelo-Vista-Controlador)**: Arquitectura base del servidor.
+  - **Factory Method (Método Fábrica)**: Utilizado para la creación y estructuración de opciones de preguntas según su tipo (`PreguntasController`).
+
+### 2.4 Estructura del Proyecto
+- **Backend (`backend/`)**:
+  - `Controllers/`: Controladores MVC y controladores RESTful API (`Api/`).
+  - `Models/`: Entidades del negocio (Usuario, Encuesta, Pregunta, PreguntaOpcion, Respuesta) y ViewModels.
+  - `Data/`: Contexto de Entity Framework (`ApplicationDbContext`) y migraciones.
+  - `Services/`: Servicios auxiliares como el servicio de exportación a Excel.
+- **Frontend (`front/`)**:
+  - `src/components/auth/`: Componentes de Login y Registro.
+  - `src/components/encuestas/`: Gestión de encuestas, listados, creación, edición, preguntas y estadísticas.
+  - `src/components/respuestas/`: Formulario para responder encuestas e historial "Mis Respuestas".
+  - `src/services/`: Comunicación centralizada con la API (`api.js`).
 
 ---
 
-## 🏛️ Patrones de Diseño Implementados
+## 3. Guía de Interfaz y Módulos
 
-1. **MVC (Modelo-Vista-Controlador)**: Separación clara entre la lógica de negocio, datos y la interfaz de usuario en el backend.
-2. **Factory Method (Método Fábrica)**: Utilizado en la creación y estructuración de colecciones de opciones predeterminadas o dinámicas según el tipo de pregunta seleccionada (`PreguntasController`).
-
----
-
-## ✨ Características Principales
-
-- **Autenticación segura**: Registro e inicio de sesión de usuarios con diseño limpio y minimalista.
-- **Gestión de Encuestas**: Crear, editar, activar/desactivar y eliminar encuestas.
-- **Gestor de Preguntas Avanzado**: 
-  - Soporte para múltiples tipos de preguntas: **Texto Libre**, **Selección Única**, **Opción Múltiple** y **Escala Numérica**.
-  - **Creación y edición personalizada** de opciones de respuesta para preguntas de selección.
-- **Módulo de Respuestas**: Interfaz pública y privada para responder encuestas de forma fluida.
-- **Estadísticas y Gráficos**: Visualización de resultados mediante gráficos de barras y pastel, junto con tablas detalladas de respuestas recolectadas.
+1. **Inicio de Sesión**: Interfaz limpia y centrada para ingresar con nombre de usuario y contraseña, con opción de registro.
+2. **Dashboard de Encuestas**: Panel central de administración para listar, filtrar y crear nuevas encuestas.
+3. **Creador de Encuestas y Preguntas**: Formulario paso a paso para definir el título, descripción, fecha de cierre, estado y añadir preguntas con opciones personalizadas.
+4. **Módulo de Respuestas**: Interfaz interactiva donde los usuarios responden encuestas activas y consultan su historial en "Mis Respuestas".
+5. **Estadísticas y Reportes**: Visualización de datos mediante gráficos de barras/pastel y tablas detalladas de respuestas.
 
 ---
 
-## 🚀 Guía de Ejecución
+## 4. Estructura de Base de Datos
 
-### 1. Backend (.NET API)
-1. Abrir una terminal en la carpeta `backend/`.
-2. Restaurar dependencias y compilar:
-   ```bash
-   dotnet restore
-   dotnet build
-   ```
-3. Ejecutar el servidor:
-   ```bash
-   dotnet run
-   ```
+El script SQL completo inicializa la base de datos `Encuestas`, configurando las tablas relacionales:
+- `roles` y `usuarios`
+- Tablas de Identity (`user_roles`, `user_claims`, `user_logins`, `user_tokens`, `role_claims`)
+- `encuestas`, `preguntas`, `preguntas_opciones`, `respuestas`, `respuestas_opciones`
 
-### 2. Frontend (React)
-1. Abrir una terminal en la carpeta `front/`.
-2. Instalar dependencias (si es necesario):
-   ```bash
-   npm install
-   ```
-3. Iniciar la aplicación en modo desarrollo:
-   ```bash
-   npm start
-   ```
+---
+
+## 🔗 Enlaces del Proyecto
+
+- **Repositorio GitHub**: [https://github.com/kaneki-04/encuestasapp](https://github.com/kaneki-04/encuestasapp)
+- **OneDrive (Proyecto comprimido + Base de datos)**: [Enlace de OneDrive](https://estunanleonedu-my.sharepoint.com/:f:/g/personal/kevin_sanchez22_est_unanleon_edu_ni/EvENWnC1UF1OjvR2SIjbQMQB7I7xqZ7famY-duN4YLDuUw?e=fT1ZFj)
+
+---
+
+## 5. Conclusión
+El proyecto **EncuestasApp** satisface los requerimientos establecidos para la asignatura Programación Orientada a la Web II, integrando un backend robusto en .NET con un frontend dinámico en React, aplicando principios sólidos de arquitectura por capas, control de identidad, API REST y patrones de diseño.
